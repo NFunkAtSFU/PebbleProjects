@@ -6,11 +6,6 @@ static Window *s_main_window;
 // use a TextLayer element to add to the Window
 static TextLayer *s_time_layer;
 
-// start TickTimerService event service. struct tm contains the current time
-static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-	
-}
-
 static void update_time() {
 	// Get a tm structure
 	time_t temp = time(NULL);
@@ -24,6 +19,7 @@ static void update_time() {
 	text_layer_set_text(s_time_layer, s_buffer);
 }
 
+// start TickTimerService event service. struct tm contains the current time
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	update_time();
 }
