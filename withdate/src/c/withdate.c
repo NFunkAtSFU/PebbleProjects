@@ -15,14 +15,12 @@ static void update_time() {
 	struct tm *tick_time = localtime(&temp);
 	
 	//Write the current hours and minutes into a buffer
-	static char s_buffer[8];
-	//strftime(s_buffer, sizeof(s_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
-	
-	//static char s_daybuffer[10];
+	static char s_buffer[8];  // buffer for hours and minutes
+	static char s_daybuffer[10];  // buffer for day of week
 	//static char s_datebuffer[] = "00-00-00";
 	
-	//strftime(s_daybuffer, sizeof(s_daybuffer), "%A", tick_time); // full day format
-	//text_layer_set_text(s_day_layer, s_daybuffer);
+	strftime(s_daybuffer, sizeof(s_daybuffer), "%A", tick_time); // full day format
+	text_layer_set_text(s_day_layer, s_daybuffer);
 		
 	strftime(s_buffer, sizeof(s_buffer), "%I:%M", tick_time);  // 12 hour format
 	text_layer_set_text(s_time_layer, s_buffer); // display this time on text_layer
@@ -51,14 +49,13 @@ static void main_window_load(Window *window) {
 	
 	text_layer_set_background_color(s_day_layer, GColorBlack);
 	text_layer_set_text_color(s_day_layer, GColorClear);
-	text_layer_set_text(s_day_layer, "Saturday");  // Placeholder
 	text_layer_set_font(s_day_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
 	text_layer_set_text_alignment(s_day_layer, GTextAlignmentLeft);
+	//text_layer_set_text(s_day_layer, "Saturday");  // Placeholder
 	
 	// Improve the layout to be more like a watchface
 	text_layer_set_background_color(s_time_layer, GColorBlack);
 	text_layer_set_text_color(s_time_layer, GColorClear);
-	// text_layer_set_text(s_time_layer, "00:00");  // Placeholder
 	text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
 	text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 	
