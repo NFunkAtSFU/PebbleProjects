@@ -21,7 +21,7 @@ static void update_time() {
 	strftime(s_daybuffer, sizeof(s_daybuffer), "%A", tick_time); // full day format
 	text_layer_set_text(s_day_layer, s_daybuffer);
 		
-	strftime(s_buffer, sizeof(s_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time); 
+	strftime(s_buffer, sizeof(s_buffer), clock_is_24h_style() ? "%H:%M" : "%l:%M", tick_time); 
 	text_layer_set_text(s_time_layer, s_buffer); // display this time on text_layer
 
 	strftime(s_datebuffer, sizeof(s_datebuffer), "%B %e", tick_time); // date
