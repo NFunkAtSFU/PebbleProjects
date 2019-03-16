@@ -5,6 +5,10 @@ static Window *s_main_window;
 
 // use a TextLayer element to add to the Window
 static TextLayer *s_time_layer;
+static TextLayer *s_day_layer;  // this will be for the day of the week
+static TextLayer *s_date_layer;  // to hold the date
+
+static GFont s_time_font;
 
 static void update_time() {
 	// Get a tm structure
@@ -12,11 +16,19 @@ static void update_time() {
 	struct tm *tick_time = localtime(&temp);
 	
 	//Write the current hours and minutes into a buffer
-	static char s_buffer[8];
-	strftime(s_buffer, sizeof(s_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
+	static char s_buffer[8];  // buffer for hours and minutes
+	static char s_daybuffer[10];  // buffer for day of week
+	static char s_datebuffer[16]; // buffer for month day
 	
-	// Display this time on the TextLayer
-	text_layer_set_text(s_time_layer, s_buffer);
+	strftime(s_daybuffer, sizeof(s_daybuffer), "%A", tick_time); // full day format
+	text_layer_set_text(s_day_layer, s_daybuffer);
+		
+	strftime(s_buffer, sizeof(s_buffer), clock_is_24h_style() ? "%H:%M" : "%l:%M", tick_time); 
+	text_layer_set_text(s_time_layer, s_buffer); // display this time on text_layer
+
+	strftime(s_datebuffer, sizeof(s_datebuffer), "%B %e", tick_time); // date
+	text_layer_set_text(s_date_layer, s_datebuffer);
+	
 }
 
 // start TickTimerService event service. struct tm contains the current time
@@ -29,27 +41,45 @@ static void main_window_load(Window *window) {
 	// Get information about the Window
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
+	s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_HELSINKI_48));
 	
 	// Create the TextLayer with specific bounds
+	s_day_layer = text_layer_create(
+		GRect(0, 2, bounds.size.w, 34));
 	s_time_layer = text_layer_create(
-		GRect(0, PBL_IF_ROUND_ELSE(58, 52), bounds.size.w, 50));
+		GRect(0, 34, bounds.size.w, 70));
+	s_date_layer = text_layer_create(
+		GRect(0, 90, bounds.size.w, 34));
+	
+	text_layer_set_background_color(s_day_layer, GColorBlack);
+	text_layer_set_text_color(s_day_layer, GColorClear);
+	text_layer_set_font(s_day_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+	text_layer_set_text_alignment(s_day_layer, GTextAlignmentLeft);
+	//text_layer_set_text(s_day_layer, "Saturday");  // Placeholder
 	
 	// Improve the layout to be more like a watchface
-	// I swapped the colors from the tutorial, but the background is only behind the text
 	text_layer_set_background_color(s_time_layer, GColorBlack);
 	text_layer_set_text_color(s_time_layer, GColorClear);
-	// text_layer_set_text(s_time_layer, "00:00");  // Placeholder
-	text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
+	text_layer_set_font(s_time_layer, s_time_font);
 	text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 	
+	text_layer_set_background_color(s_date_layer, GColorBlack);
+	text_layer_set_text_color(s_date_layer, GColorClear);
+	text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+	text_layer_set_text_alignment(s_date_layer, GTextAlignmentRight);
+	
 	// Add it as a child layer to the Window's root layer
+	layer_add_child(window_layer, text_layer_get_layer(s_day_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
+	layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 }
 
 // handler function
 static void main_window_unload(Window *window) {
 	// Destroy TextLayer
+	text_layer_destroy(s_day_layer);
 	text_layer_destroy(s_time_layer);
+	text_layer_destroy(s_date_layer);
 }
 
 static void init() {
