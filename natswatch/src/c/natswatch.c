@@ -14,6 +14,7 @@ static TextLayer *s_time_layer;
 static TextLayer *s_day_layer;  // this will be for the day of the week
 static TextLayer *s_date_layer;  // to hold the date
 static TextLayer *s_weather_layer; // for the weather layer
+static TextLayer *s_bt_dis_layer;  // to show the letter b if bluetooth disconnects
 
 // layer for the battery bar
 static Layer *s_battery_layer;
@@ -67,6 +68,17 @@ static void battery_update_proc(Layer *layer, GContext *ctx) {
 	
 }
 
+// Set up Bluetooth service subscription
+static void bluetooth_callback(bool connected) {
+  // Show icon if disconnected
+  layer_set_hidden(text_layer_get_layer(s_bt_dis_layer), connected);
+
+  if(!connected) {
+    // Issue a vibrating alert
+    vibes_double_pulse();
+  }
+}
+
 // handler function
 static void main_window_load(Window *window) {
 	// Get information about the Window
@@ -83,6 +95,8 @@ static void main_window_load(Window *window) {
 		GRect(0, 84, bounds.size.w, 38));
 	s_weather_layer = text_layer_create(
 		GRect(0, 126, bounds.size.w, 24));
+	s_bt_dis_layer = text_layer_create(
+		GRect(124, 0, 18, 22));
 	
 	// Create battery meter Layer
 	s_battery_layer = layer_create(GRect(0, 160, 180, 6));
@@ -113,14 +127,25 @@ static void main_window_load(Window *window) {
 	text_layer_set_text_alignment(s_weather_layer, GTextAlignmentLeft);
 	// text_layer_set_text(s_weather_layer, "12C Cloudy");  // Placeholder
 	
+	// Settings for the Bluetooth layer
+	text_layer_set_background_color(s_bt_dis_layer, GColorWhite);
+	text_layer_set_text_color(s_bt_dis_layer, GColorBlack);
+	text_layer_set_font(s_bt_dis_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+	text_layer_set_text_alignment(s_bt_dis_layer, GTextAlignmentLeft);
+	text_layer_set_text(s_bt_dis_layer, "!B");  // Placeholder
+	
 	// Add it as a child layer to the Window's root layer
 	layer_add_child(window_layer, text_layer_get_layer(s_day_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_weather_layer));
+	layer_add_child(window_layer, text_layer_get_layer(s_bt_dis_layer));
 	
 	// Add to battery bar layer to Window
 	layer_add_child(window_get_root_layer(window), s_battery_layer);
+	
+	// Show the correct state of the BT connection from the start
+	bluetooth_callback(connection_service_peek_pebble_app_connection());
 }
 
 // handler function
@@ -130,6 +155,7 @@ static void main_window_unload(Window *window) {
 	text_layer_destroy(s_time_layer);
 	text_layer_destroy(s_date_layer);
 	text_layer_destroy(s_weather_layer);
+	text_layer_destroy(s_bt_dis_layer);
 	
 	// Destroy the battery layer
 	layer_destroy(s_battery_layer);
@@ -211,6 +237,11 @@ static void init() {
 	
 	// Make sure the time is displayed from the start
 	update_time();
+	
+	// Register for Bluetooth connection updates
+	connection_service_subscribe((ConnectionHandlers) {
+	  .pebble_app_connection_handler = bluetooth_callback
+	});
 	
 	// register callbacks for AppMessage
 	app_message_register_inbox_received(inbox_received_callback);
