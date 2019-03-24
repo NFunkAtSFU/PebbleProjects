@@ -3,11 +3,17 @@
 // static pointer to a Window variable, to access later in init()
 static Window *s_main_window;
 
+// integer to store battery level percentage
+static int s_battery_level;
+
 // Declare font globally
 static GFont s_time_font;
 
 // use a TextLayer element to add to the Window
 static TextLayer *s_time_layer;
+
+// layer for the battery bar
+static Layer *s_battery_layer;
 
 // Pointers for bitmap
 static BitmapLayer *s_background_layer;
@@ -31,6 +37,32 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	update_time();
 }
 
+// callback to store the current charge percentage
+static void battery_callback(BatteryChargeState state) {
+	// Record the new battery level
+	s_battery_level = state.charge_percent;
+	
+	// Update meter
+	layer_mark_dirty(s_battery_layer);
+}
+
+// Layer update procedure for drawing the battery meter
+static void battery_update_proc(Layer *layer, GContext *ctx) {
+	GRect bounds = layer_get_bounds(layer);
+	
+	// Find the width of the bar (total width = 114px)
+	int width = (s_battery_level * 114) / 100;
+	
+	// Draw the background
+	graphics_context_set_fill_color(ctx, GColorBlack);
+	graphics_fill_rect(ctx, bounds, 0, GCornerNone);
+	
+	// Draw the bar
+	graphics_context_set_fill_color(ctx, GColorWhite);
+	graphics_fill_rect(ctx, GRect(0, 0, width, bounds.size.h), 0, GCornerNone);
+	
+}
+
 // handler function
 static void main_window_load(Window *window) {
 	// Get information about the Window
@@ -50,6 +82,13 @@ static void main_window_load(Window *window) {
 	// Create the TextLayer with specific bounds
 	s_time_layer = text_layer_create(
 		GRect(0, PBL_IF_ROUND_ELSE(58, 52), bounds.size.w, 50));
+	
+	// Create battery meter Layer
+	s_battery_layer = layer_create(GRect(14, 54, 115, 2));
+	layer_set_update_proc(s_battery_layer, battery_update_proc);
+	
+	// Add to Window
+	layer_add_child(window_get_root_layer(window), s_battery_layer);
 	
 	// Improve the layout to be more like a watchface
 	text_layer_set_background_color(s_time_layer, GColorClear);
@@ -82,6 +121,9 @@ static void main_window_unload(Window *window) {
 	
 	// Destroy BitmapLayer
 	bitmap_layer_destroy(s_background_layer);
+	
+	// Destroy the battery layer
+	layer_destroy(s_battery_layer);
 }
 
 static void init() {
@@ -101,6 +143,12 @@ static void init() {
 	
 	// Register with TickTimerService
 	tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+	
+	// subscribe to updates for the battery level
+	battery_state_service_subscribe(battery_callback);
+	
+	// Ensure battery level is displayed from the start
+	battery_callback(battery_state_service_peek());
 	
 	// Make sure the time is displayed from the start
 	update_time();
