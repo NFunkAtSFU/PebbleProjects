@@ -6,11 +6,16 @@
 // static pointer to a Window variable, to access later in init()
 static Window *s_main_window;
 
+// integer to store battery level percentage
+static int s_battery_level;
+
 // use a TextLayer element to add to the Window
 static TextLayer *s_time_layer;
 static TextLayer *s_day_layer;  // this will be for the day of the week
 static TextLayer *s_date_layer;  // to hold the date
 static TextLayer *s_weather_layer; // for the weather layer
+static TextLayer *s_battery_layer; // for the battery text
+
 
 static GFont s_time_font;
 
@@ -40,6 +45,12 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	update_time();
 }
 
+// callback to store the current charge percentage
+static void battery_callback(BatteryChargeState state) {
+	// Record the new battery level
+	s_battery_level = state.charge_percent;
+}
+
 // handler function
 static void main_window_load(Window *window) {
 	// Get information about the Window
@@ -55,7 +66,9 @@ static void main_window_load(Window *window) {
 	s_date_layer = text_layer_create(
 		GRect(0, 84, bounds.size.w, 34));
 	s_weather_layer = text_layer_create(
-		GRect(0, PBL_IF_ROUND_ELSE(125,120), bounds.size.w, 25));
+		GRect(0, 120, bounds.size.w, 24));
+	s_battery_layer = text_layer_create(
+		GRect(0, 140, bounds.size.w, 26));
 	
 	// Settings for the day layer
 	text_layer_set_background_color(s_day_layer, GColorBlack);
@@ -82,11 +95,19 @@ static void main_window_load(Window *window) {
 	text_layer_set_text_alignment(s_weather_layer, GTextAlignmentLeft);
 	text_layer_set_text(s_weather_layer, "12C Cloudy");  // Placeholder
 	
+	// Settings for the battery layer
+	text_layer_set_background_color(s_battery_layer, GColorClear);
+	text_layer_set_text_color(s_battery_layer, GColorBlack);
+	text_layer_set_font(s_battery_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+	text_layer_set_text_alignment(s_battery_layer, GTextAlignmentRight);
+	text_layer_set_text(s_battery_layer, "75%");  // Placeholder
+	
 	// Add it as a child layer to the Window's root layer
 	layer_add_child(window_layer, text_layer_get_layer(s_day_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_weather_layer));
+	layer_add_child(window_layer, text_layer_get_layer(s_battery_layer));
 }
 
 // handler function
@@ -96,6 +117,7 @@ static void main_window_unload(Window *window) {
 	text_layer_destroy(s_time_layer);
 	text_layer_destroy(s_date_layer);
 	text_layer_destroy(s_weather_layer);
+	text_layer_destroy(s_battery_layer);
 }
 
 static void init() {
