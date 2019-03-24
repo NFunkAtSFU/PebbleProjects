@@ -1,5 +1,8 @@
 #include <pebble.h>
 
+#define KEY_TEMPERATURE 0
+#define KEY_CONDITIONS 1
+
 // static pointer to a Window variable, to access later in init()
 static Window *s_main_window;
 
@@ -7,6 +10,7 @@ static Window *s_main_window;
 static TextLayer *s_time_layer;
 static TextLayer *s_day_layer;  // this will be for the day of the week
 static TextLayer *s_date_layer;  // to hold the date
+static TextLayer *s_weather_layer; // for the weather layer
 
 static GFont s_time_font;
 
@@ -45,33 +49,44 @@ static void main_window_load(Window *window) {
 	
 	// Create the TextLayer with specific bounds
 	s_day_layer = text_layer_create(
-		GRect(0, 2, bounds.size.w, 34));
+		GRect(0, 0, bounds.size.w, 32));
 	s_time_layer = text_layer_create(
-		GRect(0, 34, bounds.size.w, 70));
+		GRect(0, 32, bounds.size.w, 70));
 	s_date_layer = text_layer_create(
-		GRect(0, 90, bounds.size.w, 34));
+		GRect(0, 84, bounds.size.w, 34));
+	s_weather_layer = text_layer_create(
+		GRect(0, PBL_IF_ROUND_ELSE(125,120), bounds.size.w, 25));
 	
+	// Settings for the day layer
 	text_layer_set_background_color(s_day_layer, GColorBlack);
 	text_layer_set_text_color(s_day_layer, GColorClear);
 	text_layer_set_font(s_day_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
 	text_layer_set_text_alignment(s_day_layer, GTextAlignmentLeft);
-	//text_layer_set_text(s_day_layer, "Saturday");  // Placeholder
-	
-	// Improve the layout to be more like a watchface
+
+	// Settings for the time layer
 	text_layer_set_background_color(s_time_layer, GColorBlack);
 	text_layer_set_text_color(s_time_layer, GColorClear);
 	text_layer_set_font(s_time_layer, s_time_font);
 	text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 	
+	// Settings for the date layer
 	text_layer_set_background_color(s_date_layer, GColorBlack);
 	text_layer_set_text_color(s_date_layer, GColorClear);
 	text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
 	text_layer_set_text_alignment(s_date_layer, GTextAlignmentRight);
 	
+	// Settings for the weather layer
+	text_layer_set_background_color(s_weather_layer, GColorClear);
+	text_layer_set_text_color(s_weather_layer, GColorBlack);
+	text_layer_set_font(s_weather_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+	text_layer_set_text_alignment(s_weather_layer, GTextAlignmentLeft);
+	text_layer_set_text(s_weather_layer, "12C Cloudy");  // Placeholder
+	
 	// Add it as a child layer to the Window's root layer
 	layer_add_child(window_layer, text_layer_get_layer(s_day_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
+	layer_add_child(window_layer, text_layer_get_layer(s_weather_layer));
 }
 
 // handler function
@@ -80,6 +95,7 @@ static void main_window_unload(Window *window) {
 	text_layer_destroy(s_day_layer);
 	text_layer_destroy(s_time_layer);
 	text_layer_destroy(s_date_layer);
+	text_layer_destroy(s_weather_layer);
 }
 
 static void init() {
