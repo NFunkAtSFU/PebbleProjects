@@ -14,8 +14,9 @@ static TextLayer *s_time_layer;
 static TextLayer *s_day_layer;  // this will be for the day of the week
 static TextLayer *s_date_layer;  // to hold the date
 static TextLayer *s_weather_layer; // for the weather layer
-static TextLayer *s_battery_layer; // for the battery text
 
+// layer for the battery bar
+static Layer *s_battery_layer;
 
 static GFont s_time_font;
 
@@ -49,6 +50,26 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 static void battery_callback(BatteryChargeState state) {
 	// Record the new battery level
 	s_battery_level = state.charge_percent;
+	
+	// Update meter
+	layer_mark_dirty(s_battery_layer);
+}
+
+// Layer update procedure for drawing the battery meter
+static void battery_update_proc(Layer *layer, GContext *ctx) {
+	GRect bounds = layer_get_bounds(layer);
+	
+	// Find the width of the bar (total watch width = 160px)
+	int width = (s_battery_level * 160) / 100;
+	
+	// Draw the background
+	graphics_context_set_fill_color(ctx, GColorDarkGray);
+	graphics_fill_rect(ctx, bounds, 0, GCornerNone);
+	
+	// Draw the bar
+	graphics_context_set_fill_color(ctx, GColorBlack);
+	graphics_fill_rect(ctx, GRect(0, 0, width, bounds.size.h), 0, GCornerNone);
+	
 }
 
 // handler function
@@ -67,8 +88,10 @@ static void main_window_load(Window *window) {
 		GRect(0, 84, bounds.size.w, 34));
 	s_weather_layer = text_layer_create(
 		GRect(0, 120, bounds.size.w, 24));
-	s_battery_layer = text_layer_create(
-		GRect(0, 140, bounds.size.w, 26));
+	
+	// Create battery meter Layer
+	s_battery_layer = layer_create(GRect(0, 160, 180, 6));
+	layer_set_update_proc(s_battery_layer, battery_update_proc);
 	
 	// Settings for the day layer
 	text_layer_set_background_color(s_day_layer, GColorBlack);
@@ -95,19 +118,14 @@ static void main_window_load(Window *window) {
 	text_layer_set_text_alignment(s_weather_layer, GTextAlignmentLeft);
 	text_layer_set_text(s_weather_layer, "12C Cloudy");  // Placeholder
 	
-	// Settings for the battery layer
-	text_layer_set_background_color(s_battery_layer, GColorClear);
-	text_layer_set_text_color(s_battery_layer, GColorBlack);
-	text_layer_set_font(s_battery_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-	text_layer_set_text_alignment(s_battery_layer, GTextAlignmentRight);
-	text_layer_set_text(s_battery_layer, "75%");  // Placeholder
-	
 	// Add it as a child layer to the Window's root layer
 	layer_add_child(window_layer, text_layer_get_layer(s_day_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_weather_layer));
-	layer_add_child(window_layer, text_layer_get_layer(s_battery_layer));
+	
+	// Add to battery bar layer to Window
+	layer_add_child(window_get_root_layer(window), s_battery_layer);
 }
 
 // handler function
@@ -117,7 +135,9 @@ static void main_window_unload(Window *window) {
 	text_layer_destroy(s_time_layer);
 	text_layer_destroy(s_date_layer);
 	text_layer_destroy(s_weather_layer);
-	text_layer_destroy(s_battery_layer);
+	
+	// Destroy the battery layer
+	layer_destroy(s_battery_layer);
 }
 
 static void init() {
@@ -135,6 +155,12 @@ static void init() {
 	
 	// Register with TickTimerService
 	tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+	
+	// subscribe to updates for the battery level
+	battery_state_service_subscribe(battery_callback);
+	
+	// Ensure battery level is displayed from the start
+	battery_callback(battery_state_service_peek());
 	
 	// Make sure the time is displayed from the start
 	update_time();
