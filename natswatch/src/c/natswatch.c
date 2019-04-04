@@ -13,7 +13,8 @@ static int s_battery_level;
 static TextLayer *s_time_layer;
 static TextLayer *s_day_layer;  // this will be for the day of the week
 static TextLayer *s_date_layer;  // to hold the date
-static TextLayer *s_weather_layer; // for the weather layer
+static TextLayer *s_weather_layer; // for the weather conditions layer
+static TextLayer *s_temp_layer;  // for the temperature layer
 static TextLayer *s_bt_dis_layer;  // to show the letter b if bluetooth disconnects
 
 // layer for the battery bar
@@ -93,8 +94,10 @@ static void main_window_load(Window *window) {
 		GRect(0, 32, bounds.size.w, 70));
 	s_date_layer = text_layer_create(
 		GRect(0, 84, bounds.size.w, 38));
+	s_temp_layer = text_layer_create(
+		GRect(0, 122, 34, 36));
 	s_weather_layer = text_layer_create(
-		GRect(0, 126, bounds.size.w, 24));
+		GRect(0, 124, bounds.size.w, 34));
 	s_bt_dis_layer = text_layer_create(
 		GRect(124, 0, 18, 22));
 	
@@ -121,11 +124,17 @@ static void main_window_load(Window *window) {
 	text_layer_set_text_alignment(s_date_layer, GTextAlignmentRight);
 	
 	// Settings for the weather layer
-	text_layer_set_background_color(s_weather_layer, GColorClear);
-	text_layer_set_text_color(s_weather_layer, GColorBlack);
+	text_layer_set_background_color(s_weather_layer, GColorBlack);
+	text_layer_set_text_color(s_weather_layer, GColorClear);
 	text_layer_set_font(s_weather_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
-	text_layer_set_text_alignment(s_weather_layer, GTextAlignmentLeft);
+	text_layer_set_text_alignment(s_weather_layer, GTextAlignmentRight);
 	// text_layer_set_text(s_weather_layer, "12C Cloudy");  // Placeholder
+	
+	// Settings for the temperature layer
+	text_layer_set_background_color(s_temp_layer, GColorBlack);
+	text_layer_set_text_color(s_temp_layer, GColorClear);
+	text_layer_set_font(s_temp_layer, fonts_get_system_font(FONT_KEY_BITHAM_30_Black));
+	text_layer_set_text_alignment(s_temp_layer, GTextAlignmentLeft);
 	
 	// Settings for the Bluetooth layer
 	text_layer_set_background_color(s_bt_dis_layer, GColorWhite);
@@ -139,6 +148,7 @@ static void main_window_load(Window *window) {
 	layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_weather_layer));
+	layer_add_child(window_layer, text_layer_get_layer(s_temp_layer));
 	layer_add_child(window_layer, text_layer_get_layer(s_bt_dis_layer));
 	
 	// Add to battery bar layer to Window
@@ -155,6 +165,7 @@ static void main_window_unload(Window *window) {
 	text_layer_destroy(s_time_layer);
 	text_layer_destroy(s_date_layer);
 	text_layer_destroy(s_weather_layer);
+	text_layer_destroy(s_temp_layer);
 	text_layer_destroy(s_bt_dis_layer);
 	
 	// Destroy the battery layer
@@ -184,21 +195,32 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	
 	// Store incoming information from javascript weather
 	static char temperature_buffer[8];
+	static char temp_layer_buffer[8];
+	
 	static char conditions_buffer[32];
 	static char weather_layer_buffer[32];
-	
+
+
 	// Read tuples for data
 	Tuple *temp_tuple = dict_find(iterator, KEY_TEMPERATURE);
 	Tuple *conditions_tuple = dict_find(iterator, KEY_CONDITIONS);
 
-	// If all data is available, use it
-	if(temp_tuple && conditions_tuple) {
-	  snprintf(temperature_buffer, sizeof(temperature_buffer), "%dC", (int)temp_tuple->value->int32);
+	// If conditions data is available, use it
+	if(conditions_tuple) {
 	  snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", conditions_tuple->value->cstring);
 	  
   	  // Assemble full string and display
-  	  snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s, %s", temperature_buffer, conditions_buffer);
+  	  snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s, %s", conditions_buffer);
   	  text_layer_set_text(s_weather_layer, weather_layer_buffer);
+	}
+	
+	// If temperature data is available, use it
+	if(temp_tuple) {
+	  snprintf(temperature_buffer, sizeof(temperature_buffer), "%d", (int)temp_tuple->value->int32);
+	  
+  	  // Assemble full string and display
+  	  snprintf(temp_layer_buffer, sizeof(temp_layer_buffer), "%s, %s", temperature_buffer);
+  	  text_layer_set_text(s_temp_layer, temp_layer_buffer);
 	}
 }
 
