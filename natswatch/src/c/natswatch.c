@@ -133,7 +133,7 @@ static void main_window_load(Window *window) {
 	// Settings for the temperature layer
 	text_layer_set_background_color(s_temp_layer, GColorBlack);
 	text_layer_set_text_color(s_temp_layer, GColorClear);
-	text_layer_set_font(s_temp_layer, fonts_get_system_font(FONT_KEY_BITHAM_30_Black));
+	text_layer_set_font(s_temp_layer, fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK));
 	text_layer_set_text_alignment(s_temp_layer, GTextAlignmentLeft);
 	
 	// Settings for the Bluetooth layer
@@ -210,7 +210,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	  snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", conditions_tuple->value->cstring);
 	  
   	  // Assemble full string and display
-  	  snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s, %s", conditions_buffer);
+  	  snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s", conditions_buffer);
   	  text_layer_set_text(s_weather_layer, weather_layer_buffer);
 	}
 	
@@ -219,7 +219,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	  snprintf(temperature_buffer, sizeof(temperature_buffer), "%d", (int)temp_tuple->value->int32);
 	  
   	  // Assemble full string and display
-  	  snprintf(temp_layer_buffer, sizeof(temp_layer_buffer), "%s, %s", temperature_buffer);
+  	  snprintf(temp_layer_buffer, sizeof(temp_layer_buffer), "%s", temperature_buffer);
   	  text_layer_set_text(s_temp_layer, temp_layer_buffer);
 	}
 }
