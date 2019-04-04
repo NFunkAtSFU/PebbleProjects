@@ -95,9 +95,9 @@ static void main_window_load(Window *window) {
 	s_date_layer = text_layer_create(
 		GRect(0, 84, bounds.size.w, 38));
 	s_temp_layer = text_layer_create(
-		GRect(0, 122, 34, 36));
+		GRect(0, 118, 42, 40));
 	s_weather_layer = text_layer_create(
-		GRect(0, 124, bounds.size.w, 34));
+		GRect(42, 122, 150, 36));
 	s_bt_dis_layer = text_layer_create(
 		GRect(124, 0, 18, 22));
 	
@@ -127,7 +127,7 @@ static void main_window_load(Window *window) {
 	text_layer_set_background_color(s_weather_layer, GColorBlack);
 	text_layer_set_text_color(s_weather_layer, GColorClear);
 	text_layer_set_font(s_weather_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
-	text_layer_set_text_alignment(s_weather_layer, GTextAlignmentRight);
+	text_layer_set_text_alignment(s_weather_layer, GTextAlignmentLeft);
 	// text_layer_set_text(s_weather_layer, "12C Cloudy");  // Placeholder
 	
 	// Settings for the temperature layer
